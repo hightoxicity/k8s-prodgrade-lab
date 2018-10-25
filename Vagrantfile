@@ -263,9 +263,16 @@ SCRIPT
             'modifyvm', :id,
             '--nicbootprio2', '1',
             '--boot1', 'disk',
-            '--boot2', 'net',
-            '--boot3', 'none',
+            '--boot2', 'dvd',
+            '--boot3', 'net',
             '--boot4', 'none'
+          ]
+          v.customize [
+                "storageattach", :id,
+                "--storagectl", "LsiLogic",
+                "--port", "1", "--device", "0",
+                "--type", "dvddrive",
+                "--medium", "misc/ipxe.iso"
           ]
 
           if File.exist?('machines/' + host['name'] + '.vmdk')
