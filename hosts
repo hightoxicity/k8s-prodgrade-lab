@@ -12,8 +12,6 @@ all:
             leaf-1:
               ansible_host: 10.0.5.2
               asn: 64521
-              custom_ip_routes:
-                - 0.0.0.0/0 172.16.64.1
               additional_networks:
                 - 0.0.0.0/0
             leaf-2:
@@ -21,10 +19,7 @@ all:
               asn: 64522
       vars:
         ansible_connection: network_cli
-        ansible_network_os: eos
-        ansible_become: yes
-        ansible_become_method: enable
-        ansible_become_pass: vagrant
+        ansible_network_os: vyos
     servers:
       hosts:
         provisioner:
