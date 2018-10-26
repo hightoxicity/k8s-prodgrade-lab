@@ -8,8 +8,8 @@
     is_vagrant: "{{ vagrant_sh.stdout }}"
 
 - name: Management ip
-  shell: "ip addr show {{ mgmt_interface }} | grep -Eo 'inet (addr:)?([0-9]*\\.){3}[0-9]*' | grep -Eo '([0-9]*\\.){3}[0-9]*'"
-  register: vagrant_mgt_host_ip
+  shell: "ip addr show {{ vagrant_node_interface }} | grep -Eo 'inet (addr:)?([0-9]*\\.){3}[0-9]*' | grep -Eo '([0-9]*\\.){3}[0-9]*'"
+  register: vagrant_node_ip
   changed_when: False
   when: is_vagrant
 
@@ -20,7 +20,7 @@
   when: is_vagrant
 
 - name: Add new default
-  shell: "ip r add default via {{ vagrant_mgt_host_ip.stdout }}"
+  shell: "ip r add default via {{ vagrant_node_ip.stdout }}"
   changed_when: False
   ignore_errors: True
   when: is_vagrant

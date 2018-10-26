@@ -5,7 +5,7 @@ apt-get install -y nginx-extras
 
 cat << 'EOF' > /var/www/html/boot.ipxe
 #!ipxe
-set base-url http://10.0.5.254
+set base-url http://10.0.5.253
 kernel ${base-url}/coreos_production_pxe.vmlinuz cloud-config-url=${base-url}/cloud-config.yml
 initrd ${base-url}/coreos_production_pxe_image.cpio.gz
 boot
@@ -29,7 +29,7 @@ write_files:
       curltry=0
       for curltry in 0 1 2 4; do
         sleep "$curltry"
-        curl http://10.0.5.254/k8snode-raw.bz2 | bzip2 -cd | sudo dd bs=1M conv=nocreat of=/dev/sda status=none && unset curltry && break ||
+        curl http://10.0.5.253/k8snode-raw.bz2 | bzip2 -cd | sudo dd bs=1M conv=nocreat of=/dev/sda status=none && unset curltry && break ||
         echo "Failed to curl and dd image to /dev/sda"
       done
       [ -z "$curltry" ] || exit 1

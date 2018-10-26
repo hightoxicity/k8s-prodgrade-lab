@@ -18,4 +18,4 @@
 
 # On what interfaces should the DHCP server (dhcpd) serve DHCP requests?
 #       Separate multiple interfaces with spaces, e.g. "eth0 eth1".
-INTERFACES="{{ mgmt_interface }}"
+INTERFACES="{{ vagrant_node_interface if is_vagrant else node_interface }}"

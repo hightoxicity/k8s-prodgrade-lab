@@ -25,8 +25,8 @@ mask2cdr ()
 }
 
 provisioner=$(cat /provisioning/group_vars/all.yml | yq -r '.provisioner')
-mgmt_mask=$(cat /provisioning/group_vars/all.yml | yq -r '.mgmt_mask')
-cdrmask=$(mask2cdr ${mgmt_mask})
+prov_mask=$(cat /provisioning/group_vars/all.yml | yq -r '.provisioner_mask')
+cdrmask=$(mask2cdr ${prov_mask})
 vagrantif="eth0"
 mgtif="eth1"
 
@@ -42,9 +42,6 @@ network:
 EOF
 
 /usr/sbin/netplan apply
-
-#itf=$(ip link show | grep 'DOWN' | cut -d':' -f2
-#ip address add ${provisioner}/${mgmt_mask} dev ${itf}
 
 apt-get install policykit-1 -y
 
@@ -82,14 +79,14 @@ NPSTEOF
     fi
 
     provisioner=$(cat /provisioning/group_vars/all.yml | yq -r '.provisioner')
-    mgmt_mask=$(cat /provisioning/group_vars/all.yml | yq -r '.mgmt_mask')
+    prov_mask=$(cat /provisioning/group_vars/all.yml | yq -r '.provisioner_mask')
 
     mac=$(cat /provisioning/hosts | yq -r '.all.children.servers.hosts.provisioner.mac' | sed -e 's/[0-9A-F]\{2\}/&:/g' -e 's/:$//'| tr '[:upper:]' '[:lower:]')
-    cdrmask=$(mask2cdr ${mgmt_mask})
+    cdrmask=$(mask2cdr ${prov_mask})
     provisioner_router=$(cat /provisioning/group_vars/all.yml | yq -r '.provisioner_router')
 
     read -r -d '' netplanmgt <<NPMGEOF
-    mgmtif:
+    nodeif:
       match:
         macaddress: "${mac}"
       routes:
