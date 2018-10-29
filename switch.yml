@@ -1,0 +1,27 @@
+---
+- name: Prepare provisioner
+  gather_facts: yes
+  hosts: provisioner
+  roles:
+    - vagrant-provisioner
+    - gather-ssh-keys
+
+- name: Configure switching infrastructure
+  gather_facts: no
+  hosts: switches
+  roles:
+    - switch
+
+#- name: Python minimal
+#  gather_facts: no
+#  become: yes
+#  hosts: servers
+#  roles:
+#    - { role: common-mutable/py-minimal }
+
+- name: Vagrant remove df route
+  gather_facts: no
+  become: yes
+  hosts: switches
+  roles:
+    - vagrant

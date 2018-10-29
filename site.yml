@@ -6,12 +6,6 @@
     - vagrant-provisioner
     - gather-ssh-keys
 
-- name: Configure switching infrastructure
-  gather_facts: no
-  hosts: switches
-  roles:
-    - switch
-
 - name: Python minimal
   gather_facts: no
   become: yes

@@ -39,8 +39,8 @@
     vbox: virtualbox-provisioner
     libvirtbox: libvirt-provisioner
   links:
-    - name: L1-DATA
-      ip:   10.100.0.253
+    - name: PROV
+      ip:   10.0.5.253
       mac: "16189C18A68C"
 - name: k8s-master-001
   ram: 2048
