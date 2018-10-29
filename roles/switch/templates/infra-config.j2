@@ -25,7 +25,7 @@ protocols bgp {{ hostparams.asn }} neighbor {{ interface.peerip }} soft-reconfig
 {% if hostvars[host]['toras'] == hostparams.asn %}
 protocols bgp {{ hostparams.asn }} neighbor {{ hostvars[host]['nodeip'] }} remote-as {{ hostparams.asn }}
 protocols bgp {{ hostparams.asn }} neighbor {{ hostvars[host]['nodeip'] }} update-source {{ interface.name }}
-protocols bgp {{ hostparams.asn }} neighbor {{ hostvars[host]['nodeip'] }} nexthop-self
+protocols bgp {{ hostparams.asn }} neighbor {{ hostvars[host]['nodeip'] }} route-reflector-client
 protocols bgp {{ hostparams.asn }} neighbor {{ hostvars[host]['nodeip'] }} soft-reconfiguration inbound
 protocols bgp {{ hostparams.asn }} neighbor {{ hostvars[host]['nodeip'] }} description {{ hostvars[host].inventory_hostname }}
 {% endif %}
