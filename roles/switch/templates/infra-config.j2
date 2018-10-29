@@ -9,6 +9,7 @@ interfaces dummy dum{{ loopbackint }} address {{ hostparams.loopbackaddr }}
 interfaces ethernet {{ interface.name }} address {{ interface.ip }}
 interfaces ethernet {{ interface.name }} description {{ interface.description }}
 {% endfor %}
+protocols bgp {{ hostparams.asn }} parameters router-id {{ hostparams.loopbackaddr|ipaddr('address') }}
 protocols bgp {{ hostparams.asn }} network {{ hostparams.loopbackaddr }}
 {% for interface in hostparams.interfaces %}
 {% if interface.type is equalto "uplink" %}
@@ -16,6 +17,7 @@ protocols bgp {{ hostparams.asn }} neighbor {{ interface.peerip }} remote-as {{ 
 protocols bgp {{ hostparams.asn }} neighbor {{ interface.peerip }} update-source {{ interface.name }}
 protocols bgp {{ hostparams.asn }} neighbor {{ interface.peerip }} nexthop-self
 protocols bgp {{ hostparams.asn }} neighbor {{ interface.peerip }} soft-reconfiguration inbound
+protocols bgp {{ hostparams.asn }} network {{ interface.ip|ipaddr('network/prefix') }}
 {% else %}
 protocols bgp {{ hostparams.asn }} network {{ interface.ip|ipaddr('network/prefix') }}
 {% if interface.dynamicpeers %}
