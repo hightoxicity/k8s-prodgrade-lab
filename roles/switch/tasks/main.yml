@@ -1,4 +1,17 @@
 ---
+
+- name: vagrant user proper admin level
+  vyos_user:
+    name: vagrant
+    level: admin
+    state: present
+
+- name: Fix vyos config permission
+  vyos_command:
+    commands:
+      - sudo chown -R root:vyattacfg /opt/vyatta/config/active
+  changed_when: False
+
 - name: Set Validation Facts
   connection: local
   set_fact:
