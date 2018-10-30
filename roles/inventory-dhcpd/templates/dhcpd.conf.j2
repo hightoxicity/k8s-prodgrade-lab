@@ -60,7 +60,8 @@ subnet {{ subnet }} netmask {{ netmask }} {
   range {{ (subnet + "/" + node_mask) | ipaddr(dhcp_start_index) | ipaddr('address') }} {{ (subnet + "/" + node_mask) | ipaddr(dhcp_end_index) | ipaddr('address') }};
   option domain-name-servers {{ domain_name_servers }};
   option vagrant "{{ "1" if is_vagrant else "0" }}";
-  option ipxe.no-pxedhcp 1;
+  option ipxe.no-pxedhcp 0;
+  option routers {{ (subnet + "/" + node_mask) | ipaddr("254") | ipaddr('address') }};
   next-server {{ next_server }};
   if exists user-class and option user-class = "iPXE" {
   filename "http://{{ provisioner }}:80/boot.ipxe";

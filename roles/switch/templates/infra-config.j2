@@ -12,6 +12,14 @@ ip route {{ iproute }}
 interfaces ethernet {{ interface.name }} address {{ interface.ip }}
 interfaces ethernet {{ interface.name }} description {{ interface.description }}
 protocols bgp {{ hostparams.asn }} network {{ interface.ip|ipaddr('network/prefix') }}
+
+{% if inventory_hostname.startswith(leafprefix) %}
+service dhcp-relay interface {{ interface.name }}
+service dhcp-relay server {{ provisioner }}
+{% elif inventory_hostname.startswith(spineprefix) %}
+service dhcp-relay interface {{ interface.name }}
+service dhcp-relay server {{ provisioner }}
+{% endif %}
 {% endfor %}
 
 {% for interface in hostparams.interfaces %}
@@ -32,6 +40,8 @@ protocols bgp {{ hostparams.asn }} neighbor {{ hostvars[host]['nodeip'] }} descr
 {% endfor %}
 {% endif %}
 {% endfor %}
+
+service dhcp-relay interface eth1
 
 {% for addntw in hostparams.additionalnetworks or [] %}
 protocols bgp {{ hostparams.asn }} network {{ addntw }}
