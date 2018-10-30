@@ -40,7 +40,7 @@
     libvirtbox: libvirt-provisioner
   links:
     - name: PROV
-      ip:   10.0.5.253
+      ip:   10.0.5.254
       mac: "16189C18A68C"
 - name: k8s-master-001
   ram: 2048

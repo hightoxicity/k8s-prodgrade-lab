@@ -221,9 +221,9 @@ SCRIPT
             libvirt.disk_bus = 'ide'
             libvirt.cpus = 1
 
-            script += <<-SCRIPT
-bash sudo su || bash -c 'sudo su'
-SCRIPT
+#            script += <<-SCRIPT
+#bash sudo su || bash -c 'sudo su'
+#SCRIPT
           elsif /(?i:k8s-.*)/.match(host['name'])
             #libvirt.storage :file, :size => '20G', :type => 'qcow2'
             boot_network = {'network' => host['bootnet']}
@@ -365,6 +365,12 @@ SCRIPT
         script += <<-SCRIPT
 hostnamectl set-hostname $1
 SCRIPT
+
+        if /provisioner/.match(host['box']['vbox'])
+          script += <<-SCRIPT
+/bin/bash -c 'cd /provisioning && ansible-playbook switch.yml'
+SCRIPT
+        end
       end
 
       srv.vm.provision "shell" do |s|
