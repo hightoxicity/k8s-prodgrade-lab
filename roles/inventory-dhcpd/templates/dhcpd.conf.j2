@@ -52,6 +52,9 @@ max-lease-time {{ max_lease_time }};
 authoritative;
 log-facility {{ log_facility }};
 
+subnet {{ provisioner_network }} netmask {{ provisioner_mask }} {
+}
+
 {% for subnet in subnets %}
 subnet {{ subnet }} netmask {{ netmask }} {
   range {{ (subnet + "/" + node_mask) | ipaddr(dhcp_start_index) | ipaddr('address') }} {{ (subnet + "/" + node_mask) | ipaddr(dhcp_end_index) | ipaddr('address') }};
