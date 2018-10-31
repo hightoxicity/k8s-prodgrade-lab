@@ -62,6 +62,7 @@ subnet {{ subnet }} netmask {{ netmask }} {
   option vagrant "{{ "1" if is_vagrant else "0" }}";
   option ipxe.no-pxedhcp 0;
   option routers {{ (subnet + "/" + node_mask) | ipaddr("254") | ipaddr('address') }};
+  option static-routes {{ provisioner }} {{ (subnet + "/" + node_mask) | ipaddr("254") | ipaddr('address') }};
   next-server {{ next_server }};
   if exists user-class and option user-class = "iPXE" {
   filename "http://{{ provisioner }}:80/boot.ipxe";
