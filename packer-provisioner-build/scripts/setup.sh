@@ -92,6 +92,7 @@ NPSTEOF
       routes:
         - to: 0.0.0.0/0
           via: ${provisioner_router}
+          metric: 10
       addresses: [ "${provisioner}/${cdrmask}" ]
       nameservers:
         addresses: [1.1.1.1,1.0.0.1]
