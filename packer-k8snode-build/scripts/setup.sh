@@ -73,7 +73,7 @@ ITFEOF
     sudo echo "ENABLED=1" | sudo tee -a /etc/default/netplan
     sudo mv ${netcfg} /etc/netplan/01-netcfg.yaml
 
-    eth0ip=$(ip addr show wlp2s0 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
+    eth0ip=$(ip addr show eth0 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
     if [ "${eth0ip}" == "10.0.2.15" ]; then
       sudo dhclient eth1
     else
