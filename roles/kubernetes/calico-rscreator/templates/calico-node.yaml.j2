@@ -112,7 +112,7 @@ spec:
             - name: FELIX_HEALTHENABLED
               value: "true"
             - name: IP_AUTODETECTION_METHOD
-              value: "interface=eth2"
+              value: "can-reach={{provisioner}}"
             - name: AS
               value: "{{hostvars[nodename]['as']}}"
           securityContext:
