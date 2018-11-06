@@ -1,43 +1,56 @@
-# arista-k8s-lab: Network Automation Lab around K8S + Arista
+# k8s-prodgrade-lab: Network Automation Lab around K8S + Vyos spine-leaf architecture
 
 Aim of the project is to create a kubernetes cluster self-contained into a local environment (one more).
 
 Advantage of the solution is to reproduce locally a production grade networking.
 
-This lab creates a simple spine-leaf architecture with veos virtual machines.
+The project main focus is to use the same project for both vagrant and production env provisioning.
+
+This lab creates a simple spine-leaf architecture with vyos virtual machines.
 
 You will have:
-* One spine
-* Two leaves
-* A k8s master node and a worker node under first leaf
+* One vyos spine
+* Two vyos leaves
+* A k8s master node and a worker node under the first leaf
 * Another worker node under the second leaf
+* A NAT output gateway
+* A provisioner (isc-dhcp-server, tftp, nginx webserver, traffic server http/https proxy)
 
 The lab is based on the following software:
-* Arista vEOS
+* Vyos
 * Vagrant
 * VirtualBox/Libvirt
 * Ansible
 * Kubernetes
 * Calico
+* Packer
+* Coreos Linux Container
+* Apache Traffic Server
 
-The network design is a basic leaf/spine topology (AS per rack model) that will be built entirely using eBGP peerings.
+The network design is a basic leaf/spine topology (AS per rack model) that will be built using eBGP peerings.
 
 The K8S network SDN is a calico full l3 solution ensuring pod networking.
 
-## Launch the lab:
+## Network design:
 
-Please register on Arista website and download the following Arista veos virtualbox image on Arista website: vEOS-lab-4.19.7M-virtualbox.box
+![alt text](https://github.com/hightoxicity/k8s-prodgrade-lab/raw/master/doc/infra_diagram.png "Network Design")
 
-For libvirt, you should build your own box from the combined vmdk distributed by Arista. We did not succeed trying to run 4.19.7M image with libvirt (kernel panic), so we chose to use 4.20.7M
+## Build it:
 
-Copy working images under the machines directory.
+At root of the projet, run:
 
-### With virtualbox
+```bash
+make
+```
 
-* vagrant up --provider virtualbox
+## Use it:
 
-### With libvirt
+```bash
+vagrant up --provider virtualbox
+vagrant ssh provisioner -- -t 'cd /provisioning; ansible-playbook site.yml'
+```
 
-* vagrant up spine-1 leaf-1 leaf-2 --provider libvirt --parallel
-* vagrant up provisioner --provider libvirt
-* vagrant up k8s-master-001 k8s-worker-001 k8s-worker-002 --provider libvirt --parallel
+## Think it (work in progress/features to come):
+
+* Hardware discovery (ipmi, mac addresses) and ansible inventory generation
+* Libvirt support with ipxe boot
