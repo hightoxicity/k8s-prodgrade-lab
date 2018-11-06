@@ -25,8 +25,8 @@ mask2cdr ()
 }
 
 provisioner=$(cat /provisioning/group_vars/all.yml | yq -r '.provisioner')
-mgmt_mask=$(cat /provisioning/group_vars/all.yml | yq -r '.mgmt_mask')
-cdrmask=$(mask2cdr ${mgmt_mask})
+prov_mask=$(cat /provisioning/group_vars/all.yml | yq -r '.provisioner_mask')
+cdrmask=$(mask2cdr ${prov_mask})
 vagrantif="eth0"
 mgtif="eth1"
 
@@ -42,9 +42,6 @@ network:
 EOF
 
 /usr/sbin/netplan apply
-
-#itf=$(ip link show | grep 'DOWN' | cut -d':' -f2
-#ip address add ${provisioner}/${mgmt_mask} dev ${itf}
 
 apt-get install policykit-1 -y
 
@@ -82,19 +79,20 @@ NPSTEOF
     fi
 
     provisioner=$(cat /provisioning/group_vars/all.yml | yq -r '.provisioner')
-    mgmt_mask=$(cat /provisioning/group_vars/all.yml | yq -r '.mgmt_mask')
+    prov_mask=$(cat /provisioning/group_vars/all.yml | yq -r '.provisioner_mask')
 
     mac=$(cat /provisioning/hosts | yq -r '.all.children.servers.hosts.provisioner.mac' | sed -e 's/[0-9A-F]\{2\}/&:/g' -e 's/:$//'| tr '[:upper:]' '[:lower:]')
-    cdrmask=$(mask2cdr ${mgmt_mask})
+    cdrmask=$(mask2cdr ${prov_mask})
     provisioner_router=$(cat /provisioning/group_vars/all.yml | yq -r '.provisioner_router')
 
     read -r -d '' netplanmgt <<NPMGEOF
-    mgmtif:
+    nodeif:
       match:
         macaddress: "${mac}"
       routes:
         - to: 0.0.0.0/0
           via: ${provisioner_router}
+          metric: 10
       addresses: [ "${provisioner}/${cdrmask}" ]
       nameservers:
         addresses: [1.1.1.1,1.0.0.1]
@@ -114,6 +112,14 @@ NPMGEOF
     sudo pvresize /dev/sda1
     sudo lvextend -l +100%FREE /dev/mapper/trunk--vg-root
     sudo resize2fs /dev/mapper/trunk--vg-root
+
+    VAGRANT=0
+    eth0ip=$(ip addr show wlp2s0 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
+    if [ "${eth0ip}" == "10.0.2.15" ]; then
+      VAGRANT=1
+    fi
+
+    export VAGRANT
 
     cd /provisioning
     ansible-playbook ./provisioner.yml

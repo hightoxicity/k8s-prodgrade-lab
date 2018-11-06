@@ -1,0 +1,14 @@
+---
+
+- name: Prepare provisioner
+  gather_facts: yes
+  hosts: provisioner
+  roles:
+    - vagrant-provisioner
+    - gather-ssh-keys
+
+- name: Configure switching infrastructure
+  gather_facts: no
+  hosts: switches
+  roles:
+    - switch

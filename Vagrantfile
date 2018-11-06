@@ -124,13 +124,11 @@ network:
       match:
         macaddress: "16:18:9d:18:a6:8c"
       set-name: "eth1"
-  vlans:
-    vlan45:
-      id: 45
-      link: net2
       addresses: [ "172.16.64.1/24" ]
       routes:
         - to: 10.0.5.0/24
+          via: 172.16.64.254
+        - to: 10.100.0.0/16
           via: 172.16.64.254
 EOF
 
@@ -143,6 +141,7 @@ SCRIPT
     scriptPostReboot = <<-'SCRIPT'
 iptables -t nat -A POSTROUTING -s 172.16.64.0/24 -o eth0 -j MASQUERADE
 iptables -t nat -A POSTROUTING -s 10.0.5.0/24 -o eth0 -j MASQUERADE
+iptables -t nat -A POSTROUTING -s 10.100.0/16 -o eth0 -j MASQUERADE
 iptables-save -c > /etc/iptables.rules
 
 apt-get install -y networkd-dispatcher
@@ -222,12 +221,12 @@ SCRIPT
             libvirt.disk_bus = 'ide'
             libvirt.cpus = 1
 
-            script += <<-SCRIPT
-bash sudo su || bash -c 'sudo su'
-SCRIPT
+#            script += <<-SCRIPT
+#bash sudo su || bash -c 'sudo su'
+#SCRIPT
           elsif /(?i:k8s-.*)/.match(host['name'])
             #libvirt.storage :file, :size => '20G', :type => 'qcow2'
-            boot_network = {'network' => 'mgmt'}
+            boot_network = {'network' => host['bootnet']}
             libvirt.boot boot_network
             libvirt.boot 'hd'
 
@@ -305,7 +304,7 @@ SCRIPT
       if host.key?("links")
         host["links"].each do |link|
           if link.key?("name")
-            if link['name'] == "mgmt"
+            if link['name'] == "PROV"
               $mgmtip = link["ip"]
             end
 
@@ -313,7 +312,7 @@ SCRIPT
               ov.vm.network "private_network",
                 libvirt__network_name: link["name"],
                 ip: ((link.key?("ip") ? (link["ip"] == "" ? "169.254.1.11" : link["ip"]) : "169.254.1.11")),
-                libvirt__network_address: ((/(?i:k8s-.*)/.match(host['name']) && link["name"] == "mgmt") ? "10.0.5.0" : nil),
+                libvirt__network_address: ((link["name"] == "PROV") ? "10.0.5.0" : nil),
                 type: "static",
                 libvirt__forward_mode: "veryisolated",
                 auto_config: false,
@@ -328,7 +327,7 @@ SCRIPT
                 virtualbox__intnet: link["name"],
                 ip: (link.key?("ip") ? link["ip"] : "169.254.1.11"),
                 auto_config: false,
-                type: ((/(?i:k8s-.*)/.match(host['name']) && link["name"] == "mgmt") ? "dhcp" : "static"),
+                type: (/^L\d+-DATA$/.match(link["name"]) ? "dhcp" : "static"),
                 mac: (link.key?("mac") ? link["mac"] : nil),
                 model_type: "e1000"
             end
@@ -366,6 +365,12 @@ SCRIPT
         script += <<-SCRIPT
 hostnamectl set-hostname $1
 SCRIPT
+
+        if /provisioner/.match(host['box']['vbox'])
+          script += <<-SCRIPT
+/bin/bash -c 'cd /provisioning && ansible-playbook switch.yml'
+SCRIPT
+        end
       end
 
       srv.vm.provision "shell" do |s|

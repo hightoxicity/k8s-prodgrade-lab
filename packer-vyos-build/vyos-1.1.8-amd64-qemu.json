@@ -69,6 +69,7 @@
       "scripts/vyos/init.sh",
       "scripts/vyos/vagrant.sh",
       "scripts/vyos/sshd.sh",
+      "scripts/vyos/confpermissions.sh",
       "scripts/vyos/cleanup.sh",
       "scripts/vyos/minimize.sh"
     ]

@@ -21,7 +21,7 @@ asn: {{ asn }}
 {# Generate Interface IPs, peer ASN and peer IPs programatically #}
 interfaces:
 {% for intcount in range(0, spines) %}
-  - name: Ethernet{{ firstuplink + intcount }}
+  - name: eth{{ firstuplink + intcount }}
     type: uplink
     description: "S{{intcount + 1}}"
   {# We have to treat /31 differently as ipaddr doesn't behave consistently under these circumstances #}
@@ -35,8 +35,7 @@ interfaces:
     peerip: {{ p2pprefix|ipsubnet(p2plength, basenet + intcount)|ipaddr('-2')|ipaddr('address') }}
   {% endif %}
 {% endfor %}
-  - name: Ethernet{{ spines + 2}}
+  - name: eth{{ spines + 2}}
     type: rack
     description: "RACK_LEAF_{{ routerid }}_DATA"
     ip: {{ rackprefixdata|ipsubnet(racklength, routerid - 1)|ipaddr('-2')}}
-    dynamicpeers: false

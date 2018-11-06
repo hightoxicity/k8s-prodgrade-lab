@@ -24,7 +24,7 @@ clean-qemu:
 
 clean-vbox:
 	cd ${CURDIR}; \
-	rm -rf output-virtualbox-iso output-vagrant-vbox;
+	rm -rf output-virtualbox-iso output-vagrant-vbox output-vyos-1.1.8-amd64-virtualbox-iso;
 
 install: install-vbox install-qemu
 

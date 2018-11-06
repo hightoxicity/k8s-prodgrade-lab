@@ -20,7 +20,7 @@ asn: {{ asn }}
 {# Generate Interface IPs, peer ASN and peer IPs programatically #}
 interfaces:
 {% for intcount in range(0, leaves) %}
-  - name: Ethernet{{ firstuplink + intcount }}
+  - name: eth{{ firstuplink + intcount }}
     description: "L{{intcount + 1}}"
     type: "uplink"
   {# We have to treat /31 differently as ipaddr doesn't behave consistently under these circumstances #}

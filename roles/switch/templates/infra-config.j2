@@ -1,32 +1,49 @@
 #jinja2: lstrip_blocks: False
-peer-filter allasn
-   10 match as-range 1-4294967295 result accept
+
+interfaces dummy dum{{ loopbackint }} address {{ hostparams.loopbackaddr }}
+protocols bgp {{ hostparams.asn }} parameters router-id {{ hostparams.loopbackaddr|ipaddr('address') }}
+protocols bgp {{ hostparams.asn }} network {{ hostparams.loopbackaddr }}
+
 {% for iproute in hostparams.customiproutes or [] %}
 ip route {{ iproute }}
 {% endfor %}
-interface Loopback{{ loopbackint }}
-   ip address {{ hostparams.loopbackaddr }}
+
 {% for interface in hostparams.interfaces %}
-interface {{ interface.name }}
-   no switchport
-   description {{ interface.description }}
-   ip address {{ interface.ip }}
+interfaces ethernet {{ interface.name }} address {{ interface.ip }}
+interfaces ethernet {{ interface.name }} description {{ interface.description }}
+protocols bgp {{ hostparams.asn }} network {{ interface.ip|ipaddr('network/prefix') }}
+
+{% if inventory_hostname.startswith(leafprefix) %}
+service dhcp-relay interface {{ interface.name }}
+service dhcp-relay server {{ provisioner }}
+{% elif inventory_hostname.startswith(spineprefix) %}
+service dhcp-relay interface {{ interface.name }}
+service dhcp-relay server {{ provisioner }}
+{% endif %}
 {% endfor %}
-ip routing
-router bgp {{ hostparams.asn }}
-   network {{ hostparams.loopbackaddr }}
-   maximum-paths {{ maxspines }}
+
 {% for interface in hostparams.interfaces %}
 {% if interface.type is equalto "uplink" %}
-   neighbor {{ interface.peerip }} remote-as {{ interface.peerasn }}
-   neighbor {{ interface.peerip }} update-source {{ interface.name }}
-{% else %}
-   network {{ interface.ip|ipaddr('network/prefix') }}
-{% if interface.dynamicpeers %}
-   bgp listen range {{ interface.ip|ipaddr('network/prefix') }} peer-group peers-{{ hostparams.asn }} peer-filter allasn
-{% endif %}
+protocols bgp {{ hostparams.asn }} neighbor {{ interface.peerip }} remote-as {{ interface.peerasn }}
+protocols bgp {{ hostparams.asn }} neighbor {{ interface.peerip }} update-source {{ interface.name }}
+protocols bgp {{ hostparams.asn }} neighbor {{ interface.peerip }} nexthop-self
+protocols bgp {{ hostparams.asn }} neighbor {{ interface.peerip }} soft-reconfiguration inbound
+{% elif interface.type is equalto "rack" %}
+{% for host in groups['kubernetes'] %}
+{% if hostvars[host]['toras'] == hostparams.asn %}
+protocols bgp {{ hostparams.asn }} neighbor {{ hostvars[host]['nodeip'] }} nexthop-self
+protocols bgp {{ hostparams.asn }} neighbor {{ hostvars[host]['nodeip'] }} remote-as {{ hostparams.asn }}
+protocols bgp {{ hostparams.asn }} neighbor {{ hostvars[host]['nodeip'] }} update-source {{ interface.name }}
+protocols bgp {{ hostparams.asn }} neighbor {{ hostvars[host]['nodeip'] }} route-reflector-client
+protocols bgp {{ hostparams.asn }} neighbor {{ hostvars[host]['nodeip'] }} soft-reconfiguration inbound
+protocols bgp {{ hostparams.asn }} neighbor {{ hostvars[host]['nodeip'] }} description {{ hostvars[host].inventory_hostname }}
 {% endif %}
 {% endfor %}
+{% endif %}
+{% endfor %}
+
+service dhcp-relay interface eth1
+
 {% for addntw in hostparams.additionalnetworks or [] %}
-   network {{ addntw }}
+protocols bgp {{ hostparams.asn }} network {{ addntw }}
 {% endfor %}

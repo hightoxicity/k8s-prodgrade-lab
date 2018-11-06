@@ -63,19 +63,18 @@ network:
   renderer: networkd
   ethernets:
 NPHDEOF
-    nbitf=0
     for itf in $(ip -br link | cut -d' ' -f1 | grep 'eth'); do
       cat << ITFEOF >> ${netcfg}
     ${itf}:
       dhcp4: true
 ITFEOF
-      nbitf=$((nbitf+1))
     done
 
     sudo echo "ENABLED=1" | sudo tee -a /etc/default/netplan
     sudo mv ${netcfg} /etc/netplan/01-netcfg.yaml
 
-    if [ "${nbitf}" -eq "3" ]; then
+    eth0ip=$(ip addr show eth0 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
+    if [ "${eth0ip}" == "10.0.2.15" ]; then
       sudo dhclient eth1
     else
       sudo dhclient eth0
@@ -88,25 +87,6 @@ ITFEOF
     done
 
     . /etc/profile.d/dhcp_vars.sh
-
-    nodeitf="eth1"
-
-    if [ "$(ip -br link | grep 'eth2' | wc -l)" == "1" ]; then
-      nodeitf="eth2"
-    fi
-
-    nodemask=$(mask2cdr ${new_nodemask})
-
-    cat << NODEIPEOF | sudo tee -a /etc/netplan/02-netcfg.yaml
-network:
-  version: 2
-  renderer: networkd
-  ethernets:
-    ${nodeitf}:
-      addresses: [ "${new_nodeip}/${nodemask}" ]
-NODEIPEOF
-
-    sudo /usr/sbin/netplan apply
 
     sudo parted /dev/sda resizepart 1 100%
     sudo pvresize /dev/sda1

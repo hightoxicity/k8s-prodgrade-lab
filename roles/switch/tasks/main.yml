@@ -1,4 +1,17 @@
 ---
+
+- name: vagrant user proper admin level
+  vyos_user:
+    name: vagrant
+    level: admin
+    state: present
+
+- name: Fix vyos config permission
+  vyos_command:
+    commands:
+      - sudo chown -R root:vyattacfg /opt/vyatta/config/active
+  changed_when: False
+
 - name: Set Validation Facts
   connection: local
   set_fact:
@@ -58,38 +71,27 @@
   ignore_errors: True
 
 - name: Apply Config
-  eos_config:
+  vyos_config:
     #lines: "{{ lookup('file', '{{output}}/infra-{{inventory_hostname}}-config.txt') }}"
     src: "infra-config.j2"
     match: line
 
-- name: Leaf to k8s nodes bgp config if AS PER RACK model
-  eos_config:
-    lines:
-      - "bgp listen range {{ rackprefixdata|ipsubnet(racklength, (inventory_hostname.split('-')[1]|int) - 1) }} peer-group K8S_{{inventory_hostname}} remote-as {{hostvars[inventory_hostname]['asn']}}"
-    match: line
-    parents: "router bgp {{hostvars[inventory_hostname]['asn']}}"
-  when: inventory_hostname | regex_search('^leaf') and as_per_rack_model
+# - name: Leaf to k8s nodes bgp config if AS PER RACK model
+#   eos_config:
+#     lines:
+#       - "bgp listen range {{ rackprefixdata|ipsubnet(racklength, (inventory_hostname.split('-')[1]|int) - 1) }} peer-group K8S_{{inventory_hostname}} remote-as {{hostvars[inventory_hostname]['asn']}}"
+#     match: line
+#     parents: "router bgp {{hostvars[inventory_hostname]['asn']}}"
+#   when: inventory_hostname | regex_search('^leaf') and as_per_rack_model
 
-- name: Output VLAN for leaf-1
-  eos_vlan:
-    vlan_id: 45
-    name: internet
-    state: active
-    interfaces:
-      - Ethernet4
+- name: Set GW Link on leaf-1
+  vyos_l3_interface:
+    name: eth4
+    ipv4: 172.16.64.254/24
   when: inventory_hostname | regex_search('^leaf-1$')
 
-- name: Et4 switchport trunk vlan 45
-  eos_config:
-    lines:
-      - "switchport trunk allowed vlan 45"
-      - "switchport mode trunk"
-    parents: "interface Ethernet4"
-  when: inventory_hostname | regex_search('^leaf-1$')
-
-- name: Output VLAN ip address assignment
-  eos_config:
-    lines: "ip address 172.16.64.254/24"
-    parents: "interface Vlan45"
+- name: Set default route on leaf-1
+  vyos_static_route:
+    prefix: 0.0.0.0/0
+    next_hop: 172.16.64.1
   when: inventory_hostname | regex_search('^leaf-1$')

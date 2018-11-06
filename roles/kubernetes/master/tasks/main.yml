@@ -1,4 +1,5 @@
 ---
+
 - name: Check if kubeadm has already been bootsrapped
   stat: path=/etc/kubernetes/pki/ca.crt
   register: kubeinit_status
