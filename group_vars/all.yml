@@ -36,6 +36,9 @@ vagrant_node_interface: "eth1"
 node_interface: "eth0"
 node_mask: "255.255.255.0"
 
+data_subnet: 10.100
+rackprefixdata: "{{ data_subnet }}.0.0/16"
+
 provisioner_network: "10.0.5.0"
 provisioner: "10.0.5.254"
 provisioner_router: "10.0.5.2"

@@ -6,6 +6,11 @@
       "destination": "/home/vagrant/dhclient.conf"
     },
     {
+      "type": "file",
+      "source": "../group_vars",
+      "destination": "/home/vagrant/group_vars"
+    },
+    {
       "environment_vars": [
         "HOME_DIR=/home/vagrant"
       ],

@@ -7,6 +7,10 @@ hostnamectl set-hostname "k8snode"
 apt-get install software-properties-common -y
 apt-get update
 
+apt-get install python3-pip -y
+apt-get install jq -y
+pip3 install yq
+
 vagrantif="eth0"
 
 cat <<EOF > /etc/netplan/01-netcfg.yaml
@@ -56,6 +60,8 @@ fi
 DHCPHKEOF
 
     netcfg=$(mktemp)
+    data_itf=""
+    data_ip_prefix=$(cat /home/vagrant/group_vars/all.yml | yq -r '.data_subnet')
 
     cat << 'NPHDEOF' > ${netcfg}
 network:
@@ -68,18 +74,16 @@ NPHDEOF
     ${itf}:
       dhcp4: true
 ITFEOF
+
+      itf_ip=$(ip addr show ${itf} | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
+
+      grep -q "^${data_ip_prefix}" <<< ${itf_ip} && data_itf="${itf_ip}"
     done
 
     sudo echo "ENABLED=1" | sudo tee -a /etc/default/netplan
     sudo mv ${netcfg} /etc/netplan/01-netcfg.yaml
 
-    eth0ip=$(ip addr show eth0 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
-    if [ "${eth0ip}" == "10.0.2.15" ]; then
-      sudo dhclient eth1
-    else
-      sudo dhclient eth0
-    fi
-
+    sudo dhclient ${data_itf}
     sudo /usr/sbin/netplan apply
 
     while [ ! -f /etc/profile.d/dhcp_vars.sh ]; do
@@ -88,8 +92,13 @@ ITFEOF
 
     . /etc/profile.d/dhcp_vars.sh
 
-    sudo parted /dev/sda resizepart 1 100%
-    sudo pvresize /dev/sda1
+    block_device="vda"
+    if [ -b /dev/sda ]; then
+      block_device="sda"
+    fi
+
+    sudo parted /dev/${block_device} resizepart 1 100%
+    sudo pvresize /dev/${block_device}1
     sudo lvextend -l +100%FREE /dev/mapper/trunk--vg-root
     sudo resize2fs /dev/mapper/trunk--vg-root
 

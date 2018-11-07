@@ -80,6 +80,7 @@ NPSTEOF
 
     provisioner=$(cat /provisioning/group_vars/all.yml | yq -r '.provisioner')
     prov_mask=$(cat /provisioning/group_vars/all.yml | yq -r '.provisioner_mask')
+    data_ip_prefix=$(cat /provisioning/group_vars/all.yml | yq -r '.data_subnet')
 
     mac=$(cat /provisioning/hosts | yq -r '.all.children.servers.hosts.provisioner.mac' | sed -e 's/[0-9A-F]\{2\}/&:/g' -e 's/:$//'| tr '[:upper:]' '[:lower:]')
     cdrmask=$(mask2cdr ${prov_mask})
@@ -108,16 +109,21 @@ NPMGEOF
     sudo mv ${netcfg} /etc/netplan/01-netcfg.yaml
     sudo /usr/sbin/netplan apply
 
-    sudo parted /dev/sda resizepart 1 100%
-    sudo pvresize /dev/sda1
+    block_device="vda"
+    if [ -b /dev/sda ]; then
+      block_device="sda"
+    fi
+
+    sudo parted /dev/${block_device} resizepart 1 100%
+    sudo pvresize /dev/${block_device}1
     sudo lvextend -l +100%FREE /dev/mapper/trunk--vg-root
     sudo resize2fs /dev/mapper/trunk--vg-root
 
-    VAGRANT=0
-    eth0ip=$(ip addr show wlp2s0 | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
-    if [ "${eth0ip}" == "10.0.2.15" ]; then
-      VAGRANT=1
-    fi
+    VAGRANT=1
+    first_itf_name=$(ip -br link | grep -v 'lo.*' | head -n 1 | cut -d' ' -f1)
+    first_itf_ip=$(ip addr show ${first_itf_name} | grep -Eo 'inet (addr:)?([0-9]*\.){3}[0-9]*' | grep -Eo '([0-9]*\.){3}[0-9]*')
+
+    grep -q "^${data_ip_prefix}" <<< ${first_itf_ip} && VAGRANT=0
 
     export VAGRANT
 

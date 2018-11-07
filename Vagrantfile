@@ -77,8 +77,19 @@ Vagrant.configure("2") do |config|
 
   config.vm.define "output-router-01" do |rt|
     config.ssh.insert_key = true
-    rt.vm.base_mac = "16189D18A689"
-    rt.vm.box = "ubuntu/bionic64"
+
+    mgmt_mac = "16189D18A689"
+
+    rt.vm.provider :libvirt do |l, override|
+      rt.vm.box = "ubuntu/bionic64"
+      l.management_network_mac = mgmt_mac
+    end
+
+    rt.vm.provider :virtualbox do |v, override|
+      rt.vm.box = "generic/ubuntu1804"
+      rt.vm.base_mac = mgmt_mac
+    end
+
     rt.vm.synced_folder '.', '/vagrant', id: "vagrant-root", disabled: true
 
     rt.vm.network "private_network", auto_config: false, type: "static", virtualbox__intnet: "O1L1", mac: "16189D18A68C", ip: "169.254.1.11", libvirt__network_name: "O1L1", libvirt__forward_mode: "veryisolated", libvirt__dhcp_enabled: false, libvirt__mtu: 1500, model_type: "e1000"
