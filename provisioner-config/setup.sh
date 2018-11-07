@@ -24,21 +24,25 @@ write_files:
     owner: "root"
     content: |
       #!/bin/bash
-      sudo dd conv=nocreat count=1024 if=/dev/zero of=/dev/sda \
-        seek=$(($(sudo blockdev --getsz /dev/sda) - 1024)) status=none
+      block_device="vda"
+      if [ -b /dev/sda ]; then
+        block_device="sda"
+      fi
+      sudo dd conv=nocreat count=1024 if=/dev/zero of=/dev/${block_device} \
+        seek=$(($(sudo blockdev --getsz /dev/${block_device}) - 1024)) status=none
       curltry=0
       for curltry in 0 1 2 4; do
         sleep "$curltry"
-        curl http://10.0.5.254/k8snode-raw.bz2 | bzip2 -cd | sudo dd bs=1M conv=nocreat of=/dev/sda status=none && unset curltry && break ||
-        echo "Failed to curl and dd image to /dev/sda"
+        curl http://10.0.5.254/k8snode-raw.bz2 | bzip2 -cd | sudo dd bs=1M conv=nocreat of=/dev/${block_device} status=none && unset curltry && break ||
+        echo "Failed to curl and dd image to /dev/${block_device}"
       done
       [ -z "$curltry" ] || exit 1
       sudo udevadm settle
       try=0
       for try in 0 1 2 4; do
         sleep "$try"
-        sudo blockdev --rereadpt /dev/sda && unset try && break ||
-        echo "Failed to reread partitions on /dev/sda" >&2
+        sudo blockdev --rereadpt /dev/${block_device} && unset try && break ||
+        echo "Failed to reread partitions on /dev/${block_device}" >&2
       done
       [ -z "$try" ] || exit 1
       sudo udevadm settle
