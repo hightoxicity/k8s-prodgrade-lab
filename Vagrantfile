@@ -219,8 +219,8 @@ SCRIPT
 
       srv.vm.provider :libvirt do |libvirt, override|
 
-        override.vm.box = host["box"]["libvirtbox"]
-        override.vm.box_version = host["box"]["libvirtbox_version"]
+        #override.vm.box = host["box"]["libvirtbox"]
+        #override.vm.box_version = host["box"]["libvirtbox_version"]
 
         if /provisioner/.match(host['name'])
           override.vm.synced_folder '.', '/vagrant', id: "vagrant-root", disabled: true
@@ -236,10 +236,8 @@ SCRIPT
 #bash sudo su || bash -c 'sudo su'
 #SCRIPT
           elsif /(?i:k8s-.*)/.match(host['name'])
-            #libvirt.storage :file, :size => '20G', :type => 'qcow2'
-            boot_network = {'network' => host['bootnet']}
-            libvirt.boot boot_network
-            libvirt.boot 'hd'
+            libvirt.storage :file, :size => '20G', :type => 'qcow2'
+            libvirt.boot 'network'
 
             override.vm.synced_folder '.', '/vagrant', id: "vagrant-root", disabled: true
           end
