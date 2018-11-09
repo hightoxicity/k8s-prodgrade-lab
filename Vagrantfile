@@ -219,8 +219,13 @@ SCRIPT
 
       srv.vm.provider :libvirt do |libvirt, override|
 
-        override.vm.box = host["box"]["libvirtbox"]
-        override.vm.box_version = host["box"]["libvirtbox_version"]
+        if host["box"].key?("libvirtbox")
+          override.vm.box = host["box"]["libvirtbox"]
+        end
+
+        if host["box"].key?("libvirtbox_version")
+          override.vm.box_version = host["box"]["libvirtbox_version"]
+        end
 
         if /provisioner/.match(host['name'])
           override.vm.synced_folder '.', '/vagrant', id: "vagrant-root", disabled: true
@@ -231,16 +236,7 @@ SCRIPT
             override.vm.synced_folder '.', '/vagrant', id: "vagrant-root", disabled: true
             libvirt.disk_bus = 'ide'
             libvirt.cpus = 1
-
-#            script += <<-SCRIPT
-#bash sudo su || bash -c 'sudo su'
-#SCRIPT
           elsif /(?i:k8s-.*)/.match(host['name'])
-            #libvirt.storage :file, :size => '20G', :type => 'qcow2'
-            boot_network = {'network' => host['bootnet']}
-            libvirt.boot boot_network
-            libvirt.boot 'hd'
-
             override.vm.synced_folder '.', '/vagrant', id: "vagrant-root", disabled: true
           end
         end
@@ -251,7 +247,14 @@ SCRIPT
       end
 
       srv.vm.provider :virtualbox do |v, override|
-        override.vm.box = host["box"]["vbox"]
+
+        if host["box"].key?("vbox")
+          override.vm.box = host["box"]["vbox"]
+        end
+
+        if host["box"].key?("vbox_version")
+          override.vm.box_version = host["box"]["vbox_version"]
+        end
 
         if /(?i:vyos)/.match(host['box']['vbox'])
           v.customize [
@@ -381,6 +384,17 @@ SCRIPT
           script += <<-SCRIPT
 /bin/bash -c 'cd /provisioning && ansible-playbook switch.yml'
 SCRIPT
+        end
+      end
+
+      if /(?i:k8s-.*)/.match(host['name'])
+        srv.vm.provider :libvirt do |libvirt, override|
+          libvirt.storage :file, :size => '20G', :type => 'qcow2'
+          boot_network = {'network' => host['bootnet']}
+          # Please keep boot options settings in the last srv.vm.provider call since doing some extra call would break those options
+          # Workaround for https://github.com/vagrant-libvirt/vagrant-libvirt/issues/937
+          libvirt.boot 'hd'
+          libvirt.boot boot_network
         end
       end
 

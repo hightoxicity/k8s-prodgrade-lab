@@ -46,7 +46,6 @@
   ram: 2048
   box:
     vbox: ./machines/vbox-empty.box
-    libvirtbox: libvirt-k8snode
   bootnet: L1-DATA
   links:
     - name: L1-DATA
@@ -56,7 +55,6 @@
   ram: 2048
   box:
     vbox: ./machines/vbox-empty.box
-    libvirtbox: libvirt-k8snode
   bootnet: L1-DATA
   links:
     - name: L1-DATA
@@ -66,7 +64,6 @@
   ram: 2048
   box:
     vbox: ./machines/vbox-empty.box
-    libvirtbox: libvirt-k8snode
   bootnet: L2-DATA
   links:
     - name: L2-DATA
